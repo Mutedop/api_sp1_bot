@@ -30,29 +30,43 @@ def parse_homework_status(homework):
     prepared messages under bot output.
     """
 
-    logging.debug(msg='Запуск парсера.')
+    logging.debug(msg='| Запуск парсера. |')
     homework_name = homework.get('homework_name')
-    status = homework.get('status')
-    if status == 'rejected':
-        verdict = 'К сожалению в работе нашлись ошибки.'
-    elif status == 'reviewing':
-        verdict = 'Работа взята в ревью.'
+    homework_status = homework.get('status')
+
+    if homework_name or homework_status is None:
+        logging.error(f'Ошибка парсера {homework}')
+    status_list = {
+        'reviewing': 'Работа взята в ревью.',
+        'rejected': 'К сожалению в работе нашлись ошибки.',
+        'approved': ('Ревьюеру всё понравилось,'
+                     ' можно приступать к следующему уроку.')
+    }
+
+    if homework_status in status_list:
+        verdict = status_list[homework_status]
+        return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
     else:
-        verdict = ('Ревьюеру всё понравилось,'
-                   ' можно приступать к следующему уроку.')
-    return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+        logging.error(f'Ошибка в обработке "статус работы" {homework}')
 
 
 def get_homework_statuses(current_timestamp):
     """Responding to a Well-formed API Request Praktikum."""
 
+    if current_timestamp is None:
+        current_timestamp = int(time.time())
+
+    params = {'from_date': current_timestamp}
+    headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
+
     try:
         homework_statuses = requests.get(
             URL_API,
-            params={'from_date': current_timestamp},
-            headers={'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
+            params=params,
+            headers=headers
         )
         return homework_statuses.json()
+
     except requests.RequestException as error:
         logging.error(
             f'Не правильно сформированный запрос API. Ошибка: {error}'
@@ -77,7 +91,7 @@ def main():
                     parse_homework_status(
                         new_homework.get('homeworks')[0]), bot
                 )
-                logging.info('| Сообщение отправлено. |')
+                logging.info('/ Сообщение отправлено. /')
             current_timestamp = new_homework.get(
                 'current_date', current_timestamp
             )
