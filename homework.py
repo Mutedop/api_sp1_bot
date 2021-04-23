@@ -34,8 +34,10 @@ def parse_homework_status(homework):
     homework_name = homework.get('homework_name')
     homework_status = homework.get('status')
 
-    if homework_name or homework_status is None:
+    if homework_name is None or homework_status is None:
         logging.error(f'Ошибка парсера {homework}')
+        return 'Ошибка парсера'
+
     status_list = {
         'reviewing': 'Работа взята в ревью.',
         'rejected': 'К сожалению в работе нашлись ошибки.',
@@ -44,18 +46,14 @@ def parse_homework_status(homework):
     }
 
     if homework_status in status_list:
-        verdict = status_list[homework_status]
+        verdict = status_list[homework.get('status')]
         return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
-    else:
-        logging.error(f'Ошибка в обработке "статус работы" {homework}')
 
 
 def get_homework_statuses(current_timestamp):
     """Responding to a Well-formed API Request Praktikum."""
 
-    if current_timestamp is None:
-        current_timestamp = int(time.time())
-
+    current_timestamp = current_timestamp or int(time.time())
     params = {'from_date': current_timestamp}
     headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
 
