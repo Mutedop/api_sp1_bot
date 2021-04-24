@@ -48,6 +48,9 @@ def parse_homework_status(homework):
     if homework_status in status_list:
         verdict = status_list[homework.get('status')]
         return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+    else:
+        logging.error(f'Ошибка "статуса" работы "{homework_name}"')
+        return 'Ошибка статуса'
 
 
 def get_homework_statuses(current_timestamp):
@@ -90,9 +93,7 @@ def main():
                         new_homework.get('homeworks')[0]), bot
                 )
                 logging.info('/ Сообщение отправлено. /')
-            current_timestamp = new_homework.get(
-                'current_date', current_timestamp
-            )
+            current_timestamp = new_homework.get('current_date')
             time.sleep(300)
 
         except Exception as e:
